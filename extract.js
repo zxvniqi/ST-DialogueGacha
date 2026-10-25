@@ -33,11 +33,19 @@ function stripMarkup(text) {
 }
 
 /**
+ * The translate extension keeps the original in `mes` and the translation shown on screen
+ * in `extra.display_text`.
+ */
+function getMessageText(message, useTranslation) {
+    return (useTranslation && message.extra?.display_text) || message.mes;
+}
+
+/**
  * @param {object[]} chat ST chat array
- * @param {{ styles: string[], includeHidden: boolean, includeUser: boolean, minLength: number }} options
+ * @param {{ styles: string[], includeHidden: boolean, includeUser: boolean, minLength: number, useTranslation: boolean }} options
  * @returns {{ text: string, open: string, close: string, name: string, messageId: number }[]}
  */
-export function collectLines(chat, { styles, includeHidden, includeUser, minLength }) {
+export function collectLines(chat, { styles, includeHidden, includeUser, minLength, useTranslation }) {
     const patterns = buildPatterns(styles);
     const lines = [];
     if (patterns.length === 0) {
@@ -48,7 +56,7 @@ export function collectLines(chat, { styles, includeHidden, includeUser, minLeng
         if (!message?.mes || (message.is_system && !includeHidden) || (message.is_user && !includeUser)) {
             return;
         }
-        const text = stripMarkup(message.mes);
+        const text = stripMarkup(getMessageText(message, useTranslation));
         for (const { open, close, regex } of patterns) {
             for (const match of text.matchAll(regex)) {
                 const line = match[1].trim();
