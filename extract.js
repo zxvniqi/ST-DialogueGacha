@@ -24,11 +24,13 @@ function buildPatterns(enabledStyles) {
 /**
  * Drops code blocks and block containers typically used for status panels, then strips
  * remaining tags (inline tags like <font>/<span> often wrap real dialogue, so keep their text).
+ * Folded <details> keep their content: some cards fold the whole story, and translators may
+ * drop the fold, so only its <summary> title is left out.
  */
 function stripMarkup(text) {
     return text
         .replace(/```[\s\S]*?```/g, ' ')
-        .replace(/<(style|script|details|table|pre)\b[\s\S]*?<\/\1>/gi, ' ')
+        .replace(/<(style|script|summary|table|pre)\b[\s\S]*?<\/\1>/gi, ' ')
         .replace(/<[^>]+>/g, ' ');
 }
 
@@ -50,8 +52,8 @@ function cleanLine(text) {
 }
 
 /**
- * All quoted lines of one message, in a stable order. `index` is the position in that order,
- * so the same line can be found again in the other version (translation / original).
+ * All quoted lines of one message in reading order. `start` is where the line sits in its
+ * version's text, so the same line can be found again in the other version (translation / original).
  */
 function linesOfMessage(message, messageId, patterns, useTranslation) {
     const translatable = Boolean(message.extra?.display_text);
@@ -66,13 +68,13 @@ function linesOfMessage(message, messageId, patterns, useTranslation) {
                 close,
                 name: message.name ?? '',
                 messageId,
-                index: lines.length,
+                start: match.index,
                 translatable,
                 translated,
             });
         }
     }
-    return lines;
+    return lines.sort((a, b) => a.start - b.start);
 }
 
 /**
@@ -100,15 +102,21 @@ export function collectLines(chat, { styles, includeHidden, includeUser, minLeng
 }
 
 /**
- * The same line in the message's other version (original <-> translation), matched by position.
- * Falls back to the nearest position when the versions have a different number of quotes.
+ * The same line in the message's other version (original <-> translation), matched by its place
+ * among the message's quotes. Every quote style counts on both sides, since a translation often
+ * changes the quote marks (e.g. 「」 in a Japanese original, "" in the Korean translation).
+ * When the versions have a different number of quotes, the proportional place is used.
  * @returns {object|null}
  */
-export function getCounterpart(chat, line, styles) {
+export function getCounterpart(chat, line) {
     const message = chat[line.messageId];
     if (!message?.extra?.display_text) {
         return null;
     }
-    const others = linesOfMessage(message, line.messageId, buildPatterns(styles), !line.translated);
-    return others[Math.min(line.index, others.length - 1)] ?? null;
+    const patterns = buildPatterns(Object.keys(QUOTE_STYLES));
+    const own = linesOfMessage(message, line.messageId, patterns, line.translated);
+    const others = linesOfMessage(message, line.messageId, patterns, !line.translated);
+    const index = Math.max(0, own.findIndex(other => other.start === line.start));
+    const scaled = own.length > 1 ? Math.round(index * (others.length - 1) / (own.length - 1)) : 0;
+    return others[Math.min(scaled, others.length - 1)] ?? null;
 }

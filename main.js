@@ -35,7 +35,7 @@ function getCandidates() {
 
 /** The drawn line in its other version (translation <-> original), or null. */
 function getOtherVersion(line) {
-    return getCounterpart(SillyTavern.getContext().chat, line, getQuoteStyles(getSettings()));
+    return getCounterpart(SillyTavern.getContext().chat, line);
 }
 
 const openPopup = () => openGacha({ getCandidates, getOtherVersion });
