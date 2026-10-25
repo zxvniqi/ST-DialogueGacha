@@ -1,73 +1,24 @@
-// Dialogue Gacha: draws a random quoted line from the current chat.
-import { MODULE, getSettings } from './settings.js';
-import { collectLines, getCounterpart } from './extract.js';
-import { openGacha } from './gacha-view.js';
+// Entry point: loads the extension, and quietly refreshes stale cached files after an update.
+// ST's server sends no cache headers, so phone browsers may keep running an old copy of the
+// extension for hours after it was updated. When the version in manifest.json changes, every
+// file listed there is re-downloaded into the browser cache in the background (no reload),
+// so the next time the page is opened the new code runs.
+const KEY = 'st_dialogue_gacha_loaded_version';
 
-function getQuoteStyles(settings) {
-    return [settings.quoteDouble && 'double', settings.quoteCorner && 'corner'].filter(Boolean);
-}
-
-/** Collects lines with the current settings; explains via toast when nothing can be drawn. */
-function getCandidates() {
-    const { chat, getCurrentChatId } = SillyTavern.getContext();
-    if (!getCurrentChatId()) {
-        toastr.info('채팅을 먼저 열어주세요.', '대사 가챠');
-        return [];
+async function refreshCacheIfUpdated() {
+    try {
+        const base = new URL('./', import.meta.url);
+        const manifest = await (await fetch(new URL('manifest.json', base), { cache: 'no-cache' })).json();
+        if (localStorage.getItem(KEY) === manifest.version) {
+            return;
+        }
+        const files = Array.isArray(manifest.cache_files) ? manifest.cache_files : [];
+        await Promise.all(files.map(file => fetch(new URL(file, base), { cache: 'reload' })));
+        localStorage.setItem(KEY, manifest.version);
+    } catch {
+        // Storage or network trouble: the cache simply refreshes on its own later
     }
-    const settings = getSettings();
-    const styles = getQuoteStyles(settings);
-    if (styles.length === 0) {
-        toastr.info('대사 기호를 하나 이상 골라주세요.', '대사 가챠');
-        return [];
-    }
-    const lines = collectLines(chat, {
-        styles,
-        includeHidden: settings.includeHidden,
-        includeUser: settings.includeUser,
-        minLength: settings.minLength,
-        useTranslation: settings.useTranslation,
-    });
-    if (lines.length === 0) {
-        toastr.info('뽑을 수 있는 대사가 없어요.', '대사 가챠');
-    }
-    return lines;
 }
 
-/** The drawn line in its other version (translation <-> original), or null. */
-function getOtherVersion(line) {
-    return getCounterpart(SillyTavern.getContext().chat, line, getQuoteStyles(getSettings()));
-}
-
-const openPopup = () => openGacha({ getCandidates, getOtherVersion });
-
-function addMenuButton() {
-    const menu = document.getElementById('extensionsMenu');
-    if (!menu) {
-        return;
-    }
-    const item = document.createElement('div');
-    item.id = `${MODULE}_menu`;
-    item.className = 'list-group-item flex-container flexGap5 interactable';
-    item.tabIndex = 0;
-    item.innerHTML = '<div class="fa-solid fa-dice extensionsMenuExtensionButton"></div><span>대사 가챠</span>';
-    item.addEventListener('click', openPopup);
-    menu.append(item);
-}
-
-function registerSlashCommand() {
-    const { SlashCommandParser, SlashCommand } = SillyTavern.getContext();
-    SlashCommandParser.addCommandObject(SlashCommand.fromProps({
-        name: 'dgacha',
-        callback: async () => {
-            await openPopup();
-            return '';
-        },
-        helpString: '<div>Opens the Dialogue Gacha popup for the current chat.</div>',
-    }));
-}
-
-(function init() {
-    getSettings();
-    addMenuButton();
-    registerSlashCommand();
-})();
+await import('./main.js');
+refreshCacheIfUpdated();
