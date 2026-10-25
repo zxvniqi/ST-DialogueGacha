@@ -1,0 +1,200 @@
+/* Settings panel */
+.stdg_row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+}
+
+.stdg_row > span {
+    flex: 0 0 90px;
+}
+
+.stdg_run {
+    margin-top: 8px;
+}
+
+/* Stage */
+.stdg_stage {
+    --stdg-color: #9aa4b2;
+    --stdg-serif: "Noto Serif KR", "Nanum Myeongjo", "Batang", serif;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0 4px;
+    perspective: 1200px;
+    user-select: none;
+}
+
+.stdg_card {
+    position: relative;
+    width: min(300px, 74vw);
+    aspect-ratio: 4 / 5;
+    transform-style: preserve-3d;
+    transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1.2);
+    cursor: pointer;
+}
+
+.stdg_face {
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    overflow: hidden;
+}
+
+/* Card back */
+.stdg_back {
+    display: grid;
+    place-items: center;
+    background:
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.05) 0 10px, transparent 10px 20px),
+        linear-gradient(160deg, #2a2d3d, #12131a);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+.stdg_back span {
+    font-size: 72px;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* Card front */
+.stdg_front {
+    transform: rotateY(180deg);
+    display: flex;
+    flex-direction: column;
+    padding: 18px 20px;
+    box-sizing: border-box;
+}
+
+.stdg_rarity {
+    font-size: 0.85em;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+    color: var(--stdg-color);
+}
+
+.stdg_quote {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 8px 0;
+    overflow-y: auto;
+    font-size: 1.15em;
+    line-height: 1.7;
+    text-align: center;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+    border: none;
+    padding: 0;
+}
+
+.stdg_source {
+    text-align: center;
+    font-size: 0.85em;
+    opacity: 0.75;
+}
+
+.stdg_stage[data-style="novel"] .stdg_front {
+    background: #f6f1e7;
+    color: #2b2620;
+    font-family: var(--stdg-serif);
+    border: 1px solid #d8ccb5;
+}
+
+.stdg_stage[data-style="novel"] .stdg_source::before {
+    content: '';
+    display: block;
+    width: 48px;
+    margin: 0 auto 10px;
+    border-top: 1px solid #cbbfa9;
+}
+
+.stdg_stage[data-style="card"] .stdg_front {
+    background: linear-gradient(160deg, #1d1f2b, #0d0e14);
+    color: #f3f1ec;
+    border: 3px solid var(--stdg-color);
+}
+
+.stdg_caption {
+    min-height: 1.4em;
+    font-weight: bold;
+    color: var(--stdg-color);
+}
+
+/* Charging: shake while the glow shifts from white to the rarity color */
+.stdg_charging .stdg_card {
+    animation: stdg_shake 0.13s linear infinite, stdg_glow 1.3s ease-in forwards;
+}
+
+.stdg_revealed .stdg_card {
+    transform: rotateY(180deg);
+    box-shadow: 0 0 28px var(--stdg-color);
+}
+
+.stdg_stage[data-rarity="SSR"].stdg_revealed .stdg_card {
+    animation: stdg_rainbow 2.4s linear infinite;
+}
+
+@keyframes stdg_shake {
+    0%, 100% { translate: 0 0; rotate: 0deg; }
+    25% { translate: -3px 1px; rotate: -1.5deg; }
+    75% { translate: 3px -1px; rotate: 1.5deg; }
+}
+
+@keyframes stdg_glow {
+    0% { box-shadow: 0 0 6px #fff; }
+    55% { box-shadow: 0 0 18px #fff; }
+    100% { box-shadow: 0 0 40px 6px var(--stdg-color); }
+}
+
+@keyframes stdg_rainbow {
+    0% { box-shadow: 0 0 30px #ff5f6d; }
+    25% { box-shadow: 0 0 30px #ffc371; }
+    50% { box-shadow: 0 0 30px #47e891; }
+    75% { box-shadow: 0 0 30px #4f9dff; }
+    100% { box-shadow: 0 0 30px #ff5f6d; }
+}
+
+/* Particle burst on reveal */
+.stdg_burst {
+    position: absolute;
+    top: 42%;
+    left: 50%;
+    pointer-events: none;
+}
+
+.stdg_burst span {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    margin: -4px;
+    border-radius: 50%;
+    background: var(--stdg-color);
+    animation: stdg_fly 0.9s ease-out forwards;
+}
+
+@keyframes stdg_fly {
+    from { transform: rotate(var(--angle)) translateX(0) scale(1); opacity: 1; }
+    to { transform: rotate(var(--angle)) translateX(var(--dist)) scale(0.3); opacity: 0; }
+}
+
+.stdg_instant .stdg_card,
+.stdg_no_effects .stdg_card,
+.stdg_no_effects.stdg_revealed .stdg_card {
+    animation: none;
+    transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .stdg_card,
+    .stdg_burst span {
+        animation: none !important;
+        transition: none !important;
+    }
+}
