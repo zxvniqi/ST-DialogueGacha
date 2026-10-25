@@ -89,6 +89,8 @@ async function drawBackground(ctx, theme) {
  * @returns {Promise<Blob>}
  */
 export async function renderCardImage(line, theme) {
+    // Web fonts download per glyph slice; make sure the slices this text needs are ready
+    await document.fonts?.load?.(`48px ${theme.font}`, `${line.open}${line.text}${line.close}${line.name}#0123456789`).catch(() => {});
     await document.fonts?.ready;
     const canvas = document.createElement('canvas');
     canvas.width = WIDTH;

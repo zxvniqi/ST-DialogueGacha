@@ -1,9 +1,13 @@
 // Settings section shown inside the gacha popup.
 import { getSettings, saveSettings, getDefault } from './settings.js';
-import { saveBackgroundImage, clearBackgroundImage } from './appearance.js';
+import { saveBackgroundImage, clearBackgroundImage, WEB_FONT_PREFIX } from './appearance.js';
+import { WEB_FONTS, previewFamily, loadPreviewFonts } from './fonts.js';
+import { createInlineSelect } from './inline-select.js';
 
 const checkbox = (key, label) => `
     <label class="checkbox_label"><input type="checkbox" data-setting="${key}"><span>${label}</span></label>`;
+const selectSlot = (key, label) => `
+    <div class="stdg_row stdg_row_top"><span>${label}</span><div class="stdg_select_slot" data-select="${key}"></div></div>`;
 
 const FORM_HTML = `
     <summary>설정</summary>
@@ -17,28 +21,11 @@ const FORM_HTML = `
         ${checkbox('includeUser', '내(유저) 대사 포함')}
         <label class="stdg_row"><span>최소 글자 수</span>
             <input class="text_pole" type="number" min="1" max="100" data-setting="minLength"></label>
-        <label class="stdg_row"><span>먼저 보일 버전</span>
-            <select class="text_pole" data-setting="useTranslation">
-                <option value="true">번역본 (화면에 보이는 글)</option>
-                <option value="false">원문</option>
-            </select></label>
+        ${selectSlot('useTranslation', '먼저 보일 버전')}
 
         <b>꾸미기</b>
-        <label class="stdg_row"><span>스타일</span>
-            <select class="text_pole" data-setting="style">
-                <option value="novel">웹소설 발췌</option>
-                <option value="card">어두운 카드</option>
-            </select></label>
-        <label class="stdg_row"><span>글꼴</span>
-            <select class="text_pole" data-setting="fontChoice">
-                <option value="style">스타일 기본</option>
-                <option value="serif">명조 (바탕)</option>
-                <option value="sans">고딕 (돋움)</option>
-                <option value="ui">실리 채팅 글꼴</option>
-                <option value="custom">직접 입력</option>
-            </select></label>
-        <label class="stdg_row stdg_custom_font"><span>글꼴 이름</span>
-            <input class="text_pole" type="text" data-setting="customFont" placeholder="예: Nanum Pen Script"></label>
+        ${selectSlot('style', '스타일')}
+        ${selectSlot('fontChoice', '글꼴')}
         <label class="stdg_row"><span>글씨 크기 <small class="stdg_scale_value"></small></span>
             <input type="range" min="60" max="160" step="5" data-setting="fontScale"></label>
         ${checkbox('customColors', '색 직접 정하기')}
@@ -55,6 +42,38 @@ const FORM_HTML = `
         ${checkbox('effects', '뽑기 연출')}
     </div>`;
 
+/** Options for the list-style selects; values are strings, `parse` turns them back into settings. */
+const SELECTS = {
+    useTranslation: {
+        options: [
+            { value: 'true', label: '번역본 (화면에 보이는 글)' },
+            { value: 'false', label: '원문' },
+        ],
+        parse: value => value === 'true',
+    },
+    style: {
+        options: [
+            { value: 'novel', label: '웹소설 발췌' },
+            { value: 'card', label: '어두운 카드' },
+        ],
+    },
+    fontChoice: {
+        options: [
+            { value: 'style', label: '스타일 기본', group: '기본' },
+            { value: 'serif', label: '명조 (기기 내장)', group: '기본' },
+            { value: 'sans', label: '고딕 (기기 내장)', group: '기본' },
+            { value: 'ui', label: '실리 채팅 글꼴', group: '기본' },
+            ...WEB_FONTS.map(({ family, label }) => ({
+                value: `${WEB_FONT_PREFIX}${family}`,
+                label,
+                group: '무료 글꼴 (인터넷 필요)',
+                fontFamily: `${previewFamily(family)}, sans-serif`,
+            })),
+        ],
+        onOpen: loadPreviewFonts,
+    },
+};
+
 function readValue(input) {
     if (input.type === 'checkbox') {
         return input.checked;
@@ -64,9 +83,6 @@ function readValue(input) {
     }
     if (input.type === 'range') {
         return Number(input.value);
-    }
-    if (input.dataset.setting === 'useTranslation') {
-        return input.value === 'true';
     }
     return input.value;
 }
@@ -81,11 +97,9 @@ export function buildSettingsForm(onAppearanceChange) {
     form.innerHTML = FORM_HTML;
 
     const colorRow = form.querySelector('.stdg_colors');
-    const customFontRow = form.querySelector('.stdg_custom_font');
     const scaleValue = form.querySelector('.stdg_scale_value');
-    const syncColorRow = () => {
+    const syncDependentRows = () => {
         colorRow.classList.toggle('stdg_disabled', !settings.customColors);
-        customFontRow.hidden = settings.fontChoice !== 'custom';
         scaleValue.textContent = `${settings.fontScale}%`;
     };
 
@@ -93,7 +107,21 @@ export function buildSettingsForm(onAppearanceChange) {
         const value = settings[input.dataset.setting];
         input.type === 'checkbox' ? (input.checked = value) : (input.value = String(value));
     }
-    syncColorRow();
+    for (const slot of form.querySelectorAll('[data-select]')) {
+        const key = slot.dataset.select;
+        const { options, parse, onOpen } = SELECTS[key];
+        slot.append(createInlineSelect({
+            options,
+            value: String(settings[key]),
+            onOpen,
+            onChange: (value) => {
+                settings[key] = parse ? parse(value) : value;
+                saveSettings();
+                onAppearanceChange();
+            },
+        }));
+    }
+    syncDependentRows();
 
     form.addEventListener('input', (event) => {
         const input = event.target;
@@ -105,7 +133,7 @@ export function buildSettingsForm(onAppearanceChange) {
         if (input.type === 'number') {
             input.value = String(settings[key]);
         }
-        syncColorRow();
+        syncDependentRows();
         saveSettings();
         onAppearanceChange();
     });

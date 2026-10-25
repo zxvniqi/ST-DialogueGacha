@@ -9,7 +9,6 @@ const defaultSettings = Object.freeze({
     useTranslation: true,
     style: 'novel',
     fontChoice: 'style',
-    customFont: '',
     fontScale: 100,
     customColors: false,
     bgColor: '#f6f1e7',

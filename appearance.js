@@ -1,5 +1,8 @@
-// Card look: preset styles, custom colors, and an optional background image.
+// Card look: preset styles, custom colors, fonts, and an optional background image.
 // The image lives in localforage (IndexedDB) so large data never bloats settings.json.
+import { useWebFont } from './fonts.js';
+
+export const WEB_FONT_PREFIX = 'gf:';
 
 const IMAGE_KEY = 'st_dialogue_gacha_bg_image';
 const MAX_IMAGE_SIDE = 1600;
@@ -16,7 +19,11 @@ let cachedImage = null;
 
 /** The chosen font as a CSS font-family list (also used for the canvas image). */
 function resolveFont(settings, presetFont) {
-    switch (settings.fontChoice) {
+    const choice = String(settings.fontChoice ?? '');
+    if (choice.startsWith(WEB_FONT_PREFIX)) {
+        return `${useWebFont(choice.slice(WEB_FONT_PREFIX.length))}, ${presetFont}`;
+    }
+    switch (choice) {
         case 'serif':
             return SERIF;
         case 'sans':
@@ -25,10 +32,6 @@ function resolveFont(settings, presetFont) {
             // SillyTavern's own chat font (set by the UI theme)
             const uiFont = getComputedStyle(document.documentElement).getPropertyValue('--mainFontFamily').trim();
             return uiFont || SANS;
-        }
-        case 'custom': {
-            const name = String(settings.customFont ?? '').trim().replace(/["\\]/g, '');
-            return name ? `"${name}", ${presetFont}` : presetFont;
         }
         default:
             return presetFont;

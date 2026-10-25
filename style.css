@@ -246,8 +246,65 @@
     gap: 6px;
 }
 
-.stdg_row[hidden] {
+/* Rows with an unfolding list keep the label at the top */
+.stdg_row_top {
+    align-items: flex-start;
+}
+
+.stdg_row_top > span {
+    padding-top: 6px;
+}
+
+.stdg_select_slot {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Inline select: options unfold below the box */
+.stdg_select_box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.stdg_select.stdg_open .stdg_select_box i {
+    transform: rotate(180deg);
+}
+
+.stdg_select_list {
+    max-height: 220px;
+    overflow-y: auto;
+    margin-top: 3px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 6px;
+}
+
+.stdg_select_list[hidden] {
     display: none;
+}
+
+.stdg_select_group {
+    padding: 4px 10px 2px;
+    font-size: 0.8em;
+    opacity: 0.6;
+}
+
+.stdg_select_item {
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 1.05em;
+}
+
+.stdg_select_item:hover {
+    background-color: var(--white30a);
+}
+
+.stdg_select_item.stdg_selected {
+    color: var(--SmartThemeQuoteColor);
+    font-weight: bold;
 }
 
 .stdg_disabled {
