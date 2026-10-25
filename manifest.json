@@ -1,11 +1,11 @@
 {
-    "display_name": "Dialogue Gacha",
+    "display_name": "대사 가챠",
     "loading_order": 100,
     "dependencies": [],
     "js": "index.js",
     "css": "style.css",
     "author": "zxvniqi",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "homePage": "https://github.com/zxvniqi/ST-DialogueGacha",
     "auto_update": true
 }

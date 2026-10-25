@@ -1,7 +1,11 @@
 // Dialogue Gacha: draws a random quoted line from the current chat.
 import { MODULE, getSettings } from './settings.js';
-import { collectLines } from './extract.js';
+import { collectLines, getCounterpart } from './extract.js';
 import { openGacha } from './gacha-view.js';
+
+function getQuoteStyles(settings) {
+    return [settings.quoteDouble && 'double', settings.quoteCorner && 'corner'].filter(Boolean);
+}
 
 /** Collects lines with the current settings; explains via toast when nothing can be drawn. */
 function getCandidates() {
@@ -11,7 +15,7 @@ function getCandidates() {
         return [];
     }
     const settings = getSettings();
-    const styles = [settings.quoteDouble && 'double', settings.quoteCorner && 'corner'].filter(Boolean);
+    const styles = getQuoteStyles(settings);
     if (styles.length === 0) {
         toastr.info('대사 기호를 하나 이상 골라주세요.', '대사 가챠');
         return [];
@@ -29,6 +33,13 @@ function getCandidates() {
     return lines;
 }
 
+/** The drawn line in its other version (translation <-> original), or null. */
+function getOtherVersion(line) {
+    return getCounterpart(SillyTavern.getContext().chat, line, getQuoteStyles(getSettings()));
+}
+
+const openPopup = () => openGacha({ getCandidates, getOtherVersion });
+
 function addMenuButton() {
     const menu = document.getElementById('extensionsMenu');
     if (!menu) {
@@ -39,7 +50,7 @@ function addMenuButton() {
     item.className = 'list-group-item flex-container flexGap5 interactable';
     item.tabIndex = 0;
     item.innerHTML = '<div class="fa-solid fa-dice extensionsMenuExtensionButton"></div><span>대사 가챠</span>';
-    item.addEventListener('click', () => openGacha(getCandidates));
+    item.addEventListener('click', openPopup);
     menu.append(item);
 }
 
@@ -48,7 +59,7 @@ function registerSlashCommand() {
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'dgacha',
         callback: async () => {
-            await openGacha(getCandidates);
+            await openPopup();
             return '';
         },
         helpString: '<div>Opens the Dialogue Gacha popup for the current chat.</div>',

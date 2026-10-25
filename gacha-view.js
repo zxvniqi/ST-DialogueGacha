@@ -32,7 +32,10 @@ function buildStage() {
         </div>
         <div class="stdg_burst"></div>
         <div class="stdg_caption">아래 버튼을 눌러 뽑아보세요</div>
-        <div class="menu_button stdg_draw_button"><i class="fa-solid fa-dice"></i> 뽑기!</div>`;
+        <div class="stdg_buttons">
+            <div class="menu_button stdg_draw_button"><i class="fa-solid fa-dice"></i> 뽑기!</div>
+            <div class="menu_button stdg_version_button" hidden><i class="fa-solid fa-language"></i> <span></span></div>
+        </div>`;
     return stage;
 }
 
@@ -48,9 +51,11 @@ function spawnBurst(container) {
 }
 
 /**
- * @param {() => object[]} getCandidates Collects lines with the current settings (may show a toast and return []).
+ * @param {object} sources
+ * @param {() => object[]} sources.getCandidates Collects lines with the current settings (may show a toast and return []).
+ * @param {(line: object) => object|null} sources.getOtherVersion The line in its other version (translation <-> original).
  */
-export async function openGacha(getCandidates) {
+export async function openGacha({ getCandidates, getOtherVersion }) {
     const { Popup, POPUP_TYPE } = SillyTavern.getContext();
     const settings = getSettings();
     await loadBackgroundImage();
@@ -72,6 +77,15 @@ export async function openGacha(getCandidates) {
 
     let current = null;
     let revealTimer = 0;
+    const versionButton = stage.querySelector('.stdg_version_button');
+
+    const showLine = (line) => {
+        current = line;
+        stage.querySelector('.stdg_quote').textContent = `${line.open}${line.text}${line.close}`;
+        stage.querySelector('.stdg_source').textContent = `${line.name}, #${line.messageId}`;
+        versionButton.hidden = !line.translatable;
+        versionButton.querySelector('span').textContent = line.translated ? '원문 보기' : '번역본 보기';
+    };
 
     const reveal = () => {
         clearTimeout(revealTimer);
@@ -91,11 +105,7 @@ export async function openGacha(getCandidates) {
         if (lines.length === 0) {
             return;
         }
-        const line = pickRandom(lines, current);
-        current = line;
-
-        stage.querySelector('.stdg_quote').textContent = `${line.open}${line.text}${line.close}`;
-        stage.querySelector('.stdg_source').textContent = `${line.name}, #${line.messageId}`;
+        showLine(pickRandom(lines, current));
         burst.replaceChildren();
 
         // Snap back to the card back without animating, so the new line isn't spoiled mid-flip
@@ -123,6 +133,14 @@ export async function openGacha(getCandidates) {
     };
 
     stage.querySelector('.stdg_draw_button').addEventListener('click', draw);
+    versionButton.addEventListener('click', () => {
+        const other = current && getOtherVersion(current);
+        if (other) {
+            showLine(other);
+        } else {
+            toastr.info('이 대사의 다른 버전을 찾지 못했어요.', '대사 가챠');
+        }
+    });
     // Tap the card while it charges to skip the wait
     card.addEventListener('click', reveal);
 

@@ -17,7 +17,7 @@ const FORM_HTML = `
         ${checkbox('includeUser', '내(유저) 대사 포함')}
         <label class="stdg_row"><span>최소 글자 수</span>
             <input class="text_pole" type="number" min="1" max="100" data-setting="minLength"></label>
-        <label class="stdg_row"><span>번역된 대사</span>
+        <label class="stdg_row"><span>먼저 보일 버전</span>
             <select class="text_pole" data-setting="useTranslation">
                 <option value="true">번역본 (화면에 보이는 글)</option>
                 <option value="false">원문</option>

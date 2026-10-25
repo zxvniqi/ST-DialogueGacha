@@ -114,6 +114,27 @@
     opacity: 0.85;
 }
 
+.stdg_buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.stdg_version_button {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    width: auto;
+    padding: 6px 14px;
+    white-space: nowrap;
+}
+
+.stdg_version_button[hidden] {
+    display: none;
+}
+
 .stdg_draw_button {
     display: inline-flex;
     flex-direction: row;

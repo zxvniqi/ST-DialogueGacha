@@ -41,9 +41,34 @@ function getMessageText(message, useTranslation) {
 }
 
 /**
+ * All quoted lines of one message, in a stable order. `index` is the position in that order,
+ * so the same line can be found again in the other version (translation / original).
+ */
+function linesOfMessage(message, messageId, patterns, useTranslation) {
+    const translatable = Boolean(message.extra?.display_text);
+    const translated = useTranslation && translatable;
+    const text = stripMarkup(getMessageText(message, useTranslation));
+    const lines = [];
+    for (const { open, close, regex } of patterns) {
+        for (const match of text.matchAll(regex)) {
+            lines.push({
+                text: match[1].trim(),
+                open,
+                close,
+                name: message.name ?? '',
+                messageId,
+                index: lines.length,
+                translatable,
+                translated,
+            });
+        }
+    }
+    return lines;
+}
+
+/**
  * @param {object[]} chat ST chat array
  * @param {{ styles: string[], includeHidden: boolean, includeUser: boolean, minLength: number, useTranslation: boolean }} options
- * @returns {{ text: string, open: string, close: string, name: string, messageId: number }[]}
  */
 export function collectLines(chat, { styles, includeHidden, includeUser, minLength, useTranslation }) {
     const patterns = buildPatterns(styles);
@@ -56,15 +81,25 @@ export function collectLines(chat, { styles, includeHidden, includeUser, minLeng
         if (!message?.mes || (message.is_system && !includeHidden) || (message.is_user && !includeUser)) {
             return;
         }
-        const text = stripMarkup(getMessageText(message, useTranslation));
-        for (const { open, close, regex } of patterns) {
-            for (const match of text.matchAll(regex)) {
-                const line = match[1].trim();
-                if (line.length >= minLength) {
-                    lines.push({ text: line, open, close, name: message.name ?? '', messageId });
-                }
+        for (const line of linesOfMessage(message, messageId, patterns, useTranslation)) {
+            if (line.text.length >= minLength) {
+                lines.push(line);
             }
         }
     });
     return lines;
+}
+
+/**
+ * The same line in the message's other version (original <-> translation), matched by position.
+ * Falls back to the nearest position when the versions have a different number of quotes.
+ * @returns {object|null}
+ */
+export function getCounterpart(chat, line, styles) {
+    const message = chat[line.messageId];
+    if (!message?.extra?.display_text) {
+        return null;
+    }
+    const others = linesOfMessage(message, line.messageId, buildPatterns(styles), !line.translated);
+    return others[Math.min(line.index, others.length - 1)] ?? null;
 }
