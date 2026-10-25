@@ -29,6 +29,18 @@ const FORM_HTML = `
                 <option value="novel">웹소설 발췌</option>
                 <option value="card">어두운 카드</option>
             </select></label>
+        <label class="stdg_row"><span>글꼴</span>
+            <select class="text_pole" data-setting="fontChoice">
+                <option value="style">스타일 기본</option>
+                <option value="serif">명조 (바탕)</option>
+                <option value="sans">고딕 (돋움)</option>
+                <option value="ui">실리 채팅 글꼴</option>
+                <option value="custom">직접 입력</option>
+            </select></label>
+        <label class="stdg_row stdg_custom_font"><span>글꼴 이름</span>
+            <input class="text_pole" type="text" data-setting="customFont" placeholder="예: Nanum Pen Script"></label>
+        <label class="stdg_row"><span>글씨 크기 <small class="stdg_scale_value"></small></span>
+            <input type="range" min="60" max="160" step="5" data-setting="fontScale"></label>
         ${checkbox('customColors', '색 직접 정하기')}
         <div class="stdg_row stdg_colors">
             <label>배경 <input type="color" data-setting="bgColor"></label>
@@ -69,7 +81,13 @@ export function buildSettingsForm(onAppearanceChange) {
     form.innerHTML = FORM_HTML;
 
     const colorRow = form.querySelector('.stdg_colors');
-    const syncColorRow = () => colorRow.classList.toggle('stdg_disabled', !settings.customColors);
+    const customFontRow = form.querySelector('.stdg_custom_font');
+    const scaleValue = form.querySelector('.stdg_scale_value');
+    const syncColorRow = () => {
+        colorRow.classList.toggle('stdg_disabled', !settings.customColors);
+        customFontRow.hidden = settings.fontChoice !== 'custom';
+        scaleValue.textContent = `${settings.fontScale}%`;
+    };
 
     for (const input of form.querySelectorAll('[data-setting]')) {
         const value = settings[input.dataset.setting];

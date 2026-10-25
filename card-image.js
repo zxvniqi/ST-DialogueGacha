@@ -33,18 +33,22 @@ function wrapText(ctx, text, maxWidth) {
     return lines;
 }
 
-/** Picks the largest font size (within bounds) whose wrapped text fits the box. */
-function fitText(ctx, text, family, maxWidth, maxHeight) {
-    let size = 54;
+/**
+ * Picks the largest font size whose wrapped text fits the box. The user's size setting
+ * scales the range, so long lines still shrink to fit.
+ */
+function fitText(ctx, text, family, scale, maxWidth, maxHeight) {
+    const largest = Math.round(54 * scale);
+    const smallest = Math.max(16, Math.round(26 * scale));
+    let size = largest;
     let lines;
-    for (; size >= 26; size -= 4) {
+    for (; ; size -= 2) {
         ctx.font = `${size}px ${family}`;
         lines = wrapText(ctx, text, maxWidth);
-        if (lines.length * size * 1.6 <= maxHeight) {
+        if (size <= smallest || lines.length * size * 1.6 <= maxHeight) {
             break;
         }
     }
-    size = Math.max(size, 26);
     return { lines, lineHeight: size * 1.6 };
 }
 
@@ -81,7 +85,7 @@ async function drawBackground(ctx, theme) {
 
 /**
  * @param {{ text: string, open: string, close: string, name: string, messageId: number }} line
- * @param {{ background: string, text: string, font: string, image: string|null, dim: number }} theme
+ * @param {{ background: string, text: string, font: string, scale: number, image: string|null, dim: number }} theme
  * @returns {Promise<Blob>}
  */
 export async function renderCardImage(line, theme) {
@@ -96,7 +100,7 @@ export async function renderCardImage(line, theme) {
     const quote = `${line.open}${line.text}${line.close}`;
     const boxTop = BOX_TOP;
     const boxHeight = FOOTER_Y - RULE_GAP * 2 - boxTop;
-    const { lines, lineHeight } = fitText(ctx, quote, theme.font, WIDTH - PADDING * 2, boxHeight);
+    const { lines, lineHeight } = fitText(ctx, quote, theme.font, theme.scale, WIDTH - PADDING * 2, boxHeight);
 
     ctx.fillStyle = theme.text;
     ctx.textAlign = 'center';
@@ -113,7 +117,7 @@ export async function renderCardImage(line, theme) {
     ctx.lineTo(WIDTH / 2 + 60, footerY - RULE_GAP);
     ctx.stroke();
     ctx.globalAlpha = 0.75;
-    ctx.font = `32px ${theme.font}`;
+    ctx.font = `${Math.round(32 * Math.min(theme.scale, 1.3))}px ${theme.font}`;
     ctx.fillText(`${line.name}, #${line.messageId}`, WIDTH / 2, footerY);
     ctx.globalAlpha = 1;
 

@@ -86,7 +86,7 @@
     padding: 0;
     border: none;
     overflow-y: auto;
-    font-size: 0.98em;
+    font-size: calc(0.98em * var(--stdg-scale, 1));
     line-height: 1.7;
     text-align: center;
     word-break: keep-all;
@@ -244,6 +244,10 @@
     display: flex;
     align-items: center;
     gap: 6px;
+}
+
+.stdg_row[hidden] {
+    display: none;
 }
 
 .stdg_disabled {

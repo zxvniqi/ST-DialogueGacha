@@ -14,15 +14,37 @@ export const PRESETS = Object.freeze({
 
 let cachedImage = null;
 
+/** The chosen font as a CSS font-family list (also used for the canvas image). */
+function resolveFont(settings, presetFont) {
+    switch (settings.fontChoice) {
+        case 'serif':
+            return SERIF;
+        case 'sans':
+            return SANS;
+        case 'ui': {
+            // SillyTavern's own chat font (set by the UI theme)
+            const uiFont = getComputedStyle(document.documentElement).getPropertyValue('--mainFontFamily').trim();
+            return uiFont || SANS;
+        }
+        case 'custom': {
+            const name = String(settings.customFont ?? '').trim().replace(/["\\]/g, '');
+            return name ? `"${name}", ${presetFont}` : presetFont;
+        }
+        default:
+            return presetFont;
+    }
+}
+
 /**
- * @returns {{ background: string, text: string, font: string, image: string|null, dim: number }}
+ * @returns {{ background: string, text: string, font: string, scale: number, image: string|null, dim: number }}
  */
 export function resolveTheme(settings) {
     const preset = PRESETS[settings.style] ?? PRESETS.novel;
     return {
         background: settings.customColors ? settings.bgColor : preset.background,
         text: settings.customColors ? settings.textColor : preset.text,
-        font: preset.font,
+        font: resolveFont(settings, preset.font),
+        scale: (Number(settings.fontScale) || 100) / 100,
         image: cachedImage,
         dim: cachedImage ? settings.bgDim / 100 : 0,
     };
@@ -58,6 +80,7 @@ export function applyThemeToElement(element, theme) {
     element.style.setProperty('--stdg-bg', theme.background);
     element.style.setProperty('--stdg-text', theme.text);
     element.style.setProperty('--stdg-font', theme.font);
+    element.style.setProperty('--stdg-scale', String(theme.scale));
     element.style.setProperty('--stdg-image', theme.image ? `url("${theme.image}")` : 'none');
     element.style.setProperty('--stdg-dim', String(theme.dim));
 }
