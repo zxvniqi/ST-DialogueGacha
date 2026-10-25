@@ -2,7 +2,12 @@
 // instead of the phone's native option popup. Options can be grouped and previewed in a font.
 
 /**
- * @typedef {{ value: string, label: string, group?: string, fontFamily?: string }} InlineOption
+ * @typedef {object} InlineOption
+ * @property {string} value
+ * @property {string} label
+ * @property {string} [group] Header shown above the first option of each group
+ * @property {() => string} [loadFont] Called once when the row scrolls into view; returns the CSS
+ *   font-family to preview the option in (so fonts download only for rows actually seen)
  * @param {{ options: InlineOption[], value: string, onChange: (value: string) => void, onOpen?: () => void }} config
  * @returns {HTMLElement}
  */
@@ -15,6 +20,18 @@ export function createInlineSelect({ options, value, onChange, onOpen }) {
     const box = root.querySelector('.stdg_select_box');
     const label = box.querySelector('span');
     const list = root.querySelector('.stdg_select_list');
+
+    const fontLoaders = new Map();
+    const fontObserver = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+            const loadFont = entry.isIntersecting && fontLoaders.get(entry.target);
+            if (loadFont) {
+                entry.target.style.fontFamily = loadFont();
+                fontLoaders.delete(entry.target);
+                fontObserver.unobserve(entry.target);
+            }
+        }
+    }, { root: list });
 
     let currentGroup = null;
     for (const option of options) {
@@ -29,8 +46,9 @@ export function createInlineSelect({ options, value, onChange, onOpen }) {
         item.className = 'stdg_select_item';
         item.dataset.value = option.value;
         item.textContent = option.label;
-        if (option.fontFamily) {
-            item.style.fontFamily = option.fontFamily;
+        if (option.loadFont) {
+            fontLoaders.set(item, option.loadFont);
+            fontObserver.observe(item);
         }
         list.append(item);
     }
@@ -42,6 +60,7 @@ export function createInlineSelect({ options, value, onChange, onOpen }) {
             item.classList.toggle('stdg_selected', item.dataset.value === value);
         }
     };
+    // A tap outside closes the list; scrolling the page (no click) keeps it open
     const onOutside = (event) => {
         if (!root.contains(event.target)) {
             setOpen(false);
@@ -52,10 +71,10 @@ export function createInlineSelect({ options, value, onChange, onOpen }) {
         root.classList.toggle('stdg_open', open);
         if (open) {
             onOpen?.();
-            document.addEventListener('pointerdown', onOutside, true);
+            document.addEventListener('click', onOutside, true);
             list.querySelector('.stdg_selected')?.scrollIntoView({ block: 'nearest' });
         } else {
-            document.removeEventListener('pointerdown', onOutside, true);
+            document.removeEventListener('click', onOutside, true);
         }
     };
 

@@ -85,10 +85,14 @@
     margin: 0;
     padding: 0;
     border: none;
-    overflow-y: auto;
-    font-size: calc(0.98em * var(--stdg-scale, 1));
+    /* Long lines shrink to fit (--stdg-fit) instead of scrolling; the saved image copies this layout */
+    overflow: hidden;
+    align-items: safe center;
+    font-size: calc(0.98em * var(--stdg-scale, 1) * var(--stdg-fit, 1));
     line-height: 1.7;
-    text-align: center;
+    /* The text block sits in the middle of the card; its lines stay left-aligned */
+    text-align: left;
+    text-wrap: pretty;
     word-break: keep-all;
     overflow-wrap: anywhere;
 }
@@ -205,59 +209,208 @@
     }
 }
 
-/* Settings section */
+/* Settings: collapsible section with two tabs */
+.stdg_settings {
+    border-top: 1px solid color-mix(in srgb, var(--SmartThemeBorderColor) 60%, transparent);
+    padding-top: 8px;
+}
+
 .stdg_settings summary {
     cursor: pointer;
     font-weight: bold;
+    list-style: none;
 }
 
-.stdg_form {
+.stdg_settings summary::-webkit-details-marker {
+    display: none;
+}
+
+.stdg_settings summary i {
+    margin-right: 4px;
+    opacity: 0.8;
+}
+
+.stdg_tabs {
+    display: flex;
+    gap: 4px;
+    margin: 10px 0 6px;
+    padding: 3px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--SmartThemeBorderColor) 30%, transparent);
+}
+
+.stdg_tab {
+    flex: 1;
+    padding: 6px;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.stdg_tab.stdg_tab_active {
+    background: var(--SmartThemeBlurTintColor);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    font-weight: bold;
+    opacity: 1;
+}
+
+.stdg_pages > [hidden],
+.stdg_row[hidden],
+.stdg_swatches[hidden],
+.stdg_thumb[hidden],
+.stdg_chip[hidden] {
+    display: none;
+}
+
+/* Settings rows: label on the left, control on the right */
+.stdg_row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 2px;
+    border-bottom: 1px solid color-mix(in srgb, var(--SmartThemeBorderColor) 35%, transparent);
+}
+
+.stdg_row:last-child {
+    border-bottom: none;
+}
+
+.stdg_row_label {
+    flex: 0 0 74px;
+    padding-top: 5px;
+    font-size: 0.9em;
+    opacity: 0.75;
+}
+
+.stdg_row_control {
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding-top: 6px;
+    gap: 6px;
 }
 
-.stdg_form > b {
-    margin-top: 8px;
+/* Chips: independent on/off toggles */
+.stdg_chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
 }
 
-.stdg_row {
+.stdg_chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.stdg_chips .stdg_chip:not(.stdg_on) {
+    opacity: 0.55;
+}
+
+.stdg_chip.stdg_on {
+    border-color: var(--SmartThemeQuoteColor);
+    background: color-mix(in srgb, var(--SmartThemeQuoteColor) 22%, transparent);
+}
+
+/* Segmented: pick one */
+.stdg_segmented {
+    display: flex;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.stdg_segment {
+    flex: 1;
+    padding: 5px 8px;
+    text-align: center;
+    cursor: pointer;
+    white-space: nowrap;
+    opacity: 0.65;
+}
+
+.stdg_segment + .stdg_segment {
+    border-left: 1px solid var(--SmartThemeBorderColor);
+}
+
+.stdg_segment.stdg_on {
+    background: color-mix(in srgb, var(--SmartThemeQuoteColor) 25%, transparent);
+    font-weight: bold;
+    opacity: 1;
+}
+
+/* Stepper and slider */
+.stdg_stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    align-self: flex-start;
+}
+
+.stdg_stepper span {
+    min-width: 42px;
+    text-align: center;
+}
+
+.stdg_step {
+    padding: 7px 10px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.stdg_slider {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin: 3px 0;
 }
 
-.stdg_row > span {
-    flex: 0 0 90px;
-}
-
-.stdg_row select,
-.stdg_row input[type="number"],
-.stdg_row input[type="range"] {
+.stdg_slider input {
     flex: 1;
     margin: 0;
 }
 
-.stdg_colors label {
+.stdg_slider span {
+    min-width: 42px;
+    text-align: right;
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+/* Colors and background image */
+.stdg_swatches {
     display: flex;
+    gap: 14px;
+}
+
+.stdg_swatch {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.stdg_image_controls {
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 6px;
 }
 
-/* Rows with an unfolding list keep the label at the top */
-.stdg_row_top {
-    align-items: flex-start;
-}
-
-.stdg_row_top > span {
-    padding-top: 6px;
-}
-
-.stdg_select_slot {
-    flex: 1;
-    min-width: 0;
+.stdg_thumb {
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    background-size: cover;
+    background-position: center;
 }
 
 /* Inline select: options unfold below the box */
@@ -275,11 +428,11 @@
 }
 
 .stdg_select_list {
-    max-height: 220px;
+    max-height: 240px;
     overflow-y: auto;
-    margin-top: 3px;
+    margin-top: 4px;
     border: 1px solid var(--SmartThemeBorderColor);
-    border-radius: 6px;
+    border-radius: 8px;
 }
 
 .stdg_select_list[hidden] {
@@ -287,13 +440,20 @@
 }
 
 .stdg_select_group {
-    padding: 4px 10px 2px;
+    margin-top: 4px;
+    padding: 6px 10px 3px;
+    border-top: 1px solid color-mix(in srgb, var(--SmartThemeBorderColor) 50%, transparent);
     font-size: 0.8em;
-    opacity: 0.6;
+    opacity: 0.65;
+}
+
+.stdg_select_group:first-child {
+    margin-top: 0;
+    border-top: none;
 }
 
 .stdg_select_item {
-    padding: 6px 10px;
+    padding: 7px 12px;
     cursor: pointer;
     font-size: 1.05em;
 }
@@ -307,14 +467,3 @@
     font-weight: bold;
 }
 
-.stdg_disabled {
-    opacity: 0.4;
-    pointer-events: none;
-}
-
-.stdg_small_button {
-    width: auto;
-    white-space: nowrap;
-    margin: 0;
-    padding: 2px 10px;
-}

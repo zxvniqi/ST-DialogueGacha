@@ -1,8 +1,6 @@
 // Card look: preset styles, custom colors, fonts, and an optional background image.
 // The image lives in localforage (IndexedDB) so large data never bloats settings.json.
-import { useWebFont } from './fonts.js';
-
-export const WEB_FONT_PREFIX = 'gf:';
+import { findFont, useFont } from './fonts.js';
 
 const IMAGE_KEY = 'st_dialogue_gacha_bg_image';
 const MAX_IMAGE_SIDE = 1600;
@@ -20,8 +18,9 @@ let cachedImage = null;
 /** The chosen font as a CSS font-family list (also used for the canvas image). */
 function resolveFont(settings, presetFont) {
     const choice = String(settings.fontChoice ?? '');
-    if (choice.startsWith(WEB_FONT_PREFIX)) {
-        return `${useWebFont(choice.slice(WEB_FONT_PREFIX.length))}, ${presetFont}`;
+    const webFont = findFont(choice);
+    if (webFont) {
+        return `${useFont(webFont)}, ${presetFont}`;
     }
     switch (choice) {
         case 'serif':
@@ -51,6 +50,11 @@ export function resolveTheme(settings) {
         image: cachedImage,
         dim: cachedImage ? settings.bgDim / 100 : 0,
     };
+}
+
+/** The stored background image (data URL), or null. */
+export function getBackgroundImage() {
+    return cachedImage;
 }
 
 export async function loadBackgroundImage() {

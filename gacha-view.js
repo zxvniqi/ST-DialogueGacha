@@ -5,6 +5,8 @@ import { renderCardImage, downloadBlob } from './card-image.js';
 import { buildSettingsForm } from './settings-form.js';
 
 const CHARGE_MS = 1300;
+const MIN_FIT = 0.4;
+const FIT_STEP = 0.05;
 const BURST_PARTICLES = 16;
 const CAPTIONS = Object.freeze(['두근두근...', '과연 무슨 대사가...?', '두근두근...!', '나와라...!']);
 
@@ -67,10 +69,25 @@ export async function openGacha({ getCandidates, getOtherVersion }) {
     const caption = stage.querySelector('.stdg_caption');
     const burst = stage.querySelector('.stdg_burst');
 
+    const quote = stage.querySelector('.stdg_quote');
+
+    /** Shrinks long lines until they fit the card (the saved image copies this layout). */
+    const fitQuote = () => {
+        let fit = 1;
+        stage.style.setProperty('--stdg-fit', '1');
+        while (quote.scrollHeight > quote.clientHeight && fit > MIN_FIT) {
+            fit -= FIT_STEP;
+            stage.style.setProperty('--stdg-fit', String(fit));
+        }
+    };
+
     const applyAppearance = () => {
         stage.dataset.style = settings.style;
         stage.classList.toggle('stdg_no_effects', !settings.effects);
         applyThemeToElement(stage, resolveTheme(settings));
+        fitQuote();
+        // Fonts load lazily; refit once the new one arrives
+        document.fonts?.ready.then(fitQuote);
     };
     applyAppearance();
     root.append(stage, buildSettingsForm(applyAppearance));
@@ -81,10 +98,11 @@ export async function openGacha({ getCandidates, getOtherVersion }) {
 
     const showLine = (line) => {
         current = line;
-        stage.querySelector('.stdg_quote').textContent = `${line.open}${line.text}${line.close}`;
+        quote.textContent = `${line.open}${line.text}${line.close}`;
         stage.querySelector('.stdg_source').textContent = `${line.name}, #${line.messageId}`;
         versionButton.hidden = !line.translatable;
-        versionButton.querySelector('span').textContent = line.translated ? '원문 보기' : '번역본 보기';
+        versionButton.querySelector('span').textContent = line.translated ? '원문 보기' : '번역문 보기';
+        fitQuote();
     };
 
     const reveal = () => {
@@ -124,7 +142,7 @@ export async function openGacha({ getCandidates, getOtherVersion }) {
             return;
         }
         try {
-            const blob = await renderCardImage(current, resolveTheme(settings));
+            const blob = await renderCardImage(stage.querySelector('.stdg_front'), resolveTheme(settings));
             downloadBlob(blob, `dialogue_${current.name}_${current.messageId}.png`);
         } catch (error) {
             console.error('[st_dialogue_gacha] Image export failed', error);
