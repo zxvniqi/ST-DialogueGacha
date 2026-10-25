@@ -1,8 +1,12 @@
 // Renders a drawn line to a PNG with plain canvas (no external libraries).
 
+// Square image; the footer (rule + source) sits near the bottom, the quote fills the space above.
 const WIDTH = 1080;
-const HEIGHT = 1350;
+const HEIGHT = 1080;
 const PADDING = 130;
+const BOX_TOP = 130;
+const FOOTER_Y = HEIGHT - 150;
+const RULE_GAP = 50;
 
 /** Wraps text to a width, preferring spaces but breaking anywhere for CJK runs. */
 function wrapText(ctx, text, maxWidth) {
@@ -90,8 +94,8 @@ export async function renderCardImage(line, theme) {
     await drawBackground(ctx, theme);
 
     const quote = `${line.open}${line.text}${line.close}`;
-    const boxTop = 200;
-    const boxHeight = HEIGHT - boxTop - 360;
+    const boxTop = BOX_TOP;
+    const boxHeight = FOOTER_Y - RULE_GAP * 2 - boxTop;
     const { lines, lineHeight } = fitText(ctx, quote, theme.font, WIDTH - PADDING * 2, boxHeight);
 
     ctx.fillStyle = theme.text;
@@ -100,13 +104,13 @@ export async function renderCardImage(line, theme) {
     const blockTop = boxTop + (boxHeight - lines.length * lineHeight) / 2;
     lines.forEach((text, index) => ctx.fillText(text, WIDTH / 2, blockTop + lineHeight * (index + 0.5)));
 
-    const footerY = HEIGHT - 230;
+    const footerY = FOOTER_Y;
     ctx.globalAlpha = 0.45;
     ctx.strokeStyle = theme.text;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(WIDTH / 2 - 60, footerY - 50);
-    ctx.lineTo(WIDTH / 2 + 60, footerY - 50);
+    ctx.moveTo(WIDTH / 2 - 60, footerY - RULE_GAP);
+    ctx.lineTo(WIDTH / 2 + 60, footerY - RULE_GAP);
     ctx.stroke();
     ctx.globalAlpha = 0.75;
     ctx.font = `32px ${theme.font}`;

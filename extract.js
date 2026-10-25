@@ -40,6 +40,15 @@ function getMessageText(message, useTranslation) {
     return (useTranslation && message.extra?.display_text) || message.mes;
 }
 
+/** Drops markdown emphasis (**bold**, *italic*, ~~strike~~, __under__) so the card shows plain text. */
+function cleanLine(text) {
+    return text
+        .replace(/(\*{1,3}|~~|__)(.+?)\1/g, '$2')
+        .replace(/\*+/g, '')
+        .replace(/ {2,}/g, ' ')
+        .trim();
+}
+
 /**
  * All quoted lines of one message, in a stable order. `index` is the position in that order,
  * so the same line can be found again in the other version (translation / original).
@@ -52,7 +61,7 @@ function linesOfMessage(message, messageId, patterns, useTranslation) {
     for (const { open, close, regex } of patterns) {
         for (const match of text.matchAll(regex)) {
             lines.push({
-                text: match[1].trim(),
+                text: cleanLine(match[1]),
                 open,
                 close,
                 name: message.name ?? '',

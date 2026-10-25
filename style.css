@@ -26,8 +26,8 @@
 
 .stdg_card {
     position: relative;
-    width: min(280px, 72vw);
-    aspect-ratio: 4 / 5;
+    width: min(300px, 76vw);
+    aspect-ratio: 1 / 1;
     transform-style: preserve-3d;
     transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1.2);
     cursor: pointer;
