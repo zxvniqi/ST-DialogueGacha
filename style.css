@@ -90,8 +90,9 @@
     align-items: safe center;
     font-size: calc(0.98em * var(--stdg-scale, 1) * var(--stdg-fit, 1));
     line-height: 1.7;
-    /* The text block sits in the middle of the card; its lines stay left-aligned */
-    text-align: left;
+    /* The text block sits in the middle of the card; its lines follow the chosen alignment
+       (the saved image copies the measured lines, so it matches) */
+    text-align: var(--stdg-align, left);
     text-wrap: pretty;
     word-break: keep-all;
     overflow-wrap: anywhere;

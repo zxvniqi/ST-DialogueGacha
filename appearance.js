@@ -38,7 +38,7 @@ function resolveFont(settings, presetFont) {
 }
 
 /**
- * @returns {{ background: string, text: string, font: string, scale: number, image: string|null, dim: number }}
+ * @returns {{ background: string, text: string, font: string, scale: number, align: string, image: string|null, dim: number }}
  */
 export function resolveTheme(settings) {
     const preset = PRESETS[settings.style] ?? PRESETS.novel;
@@ -47,6 +47,7 @@ export function resolveTheme(settings) {
         text: settings.customColors ? settings.textColor : preset.text,
         font: resolveFont(settings, preset.font),
         scale: (Number(settings.fontScale) || 100) / 100,
+        align: ['left', 'center', 'right'].includes(settings.textAlign) ? settings.textAlign : 'left',
         image: cachedImage,
         dim: cachedImage ? settings.bgDim / 100 : 0,
     };
@@ -88,6 +89,7 @@ export function applyThemeToElement(element, theme) {
     element.style.setProperty('--stdg-text', theme.text);
     element.style.setProperty('--stdg-font', theme.font);
     element.style.setProperty('--stdg-scale', String(theme.scale));
+    element.style.setProperty('--stdg-align', theme.align);
     element.style.setProperty('--stdg-image', theme.image ? `url("${theme.image}")` : 'none');
     element.style.setProperty('--stdg-dim', String(theme.dim));
 }

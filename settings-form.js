@@ -187,6 +187,7 @@ function buildLookPage(onChange) {
         row('스타일', segmented('style', [['novel', '웹소설 발췌'], ['card', '어두운 카드']], onChange)),
         row('글꼴', fontSelect),
         row('글씨 크기', slider('fontScale', 60, 160, 5, onChange)),
+        row('글씨 정렬', segmented('textAlign', [['left', '왼쪽'], ['center', '가운데'], ['right', '오른쪽']], onChange)),
         row('색', colorChoice, swatches),
         row('배경 사진', imageControls),
         dimRow,

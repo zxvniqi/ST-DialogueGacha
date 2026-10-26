@@ -10,6 +10,7 @@ const defaultSettings = Object.freeze({
     style: 'novel',
     fontChoice: 'style',
     fontScale: 100,
+    textAlign: 'left',
     customColors: false,
     bgColor: '#f6f1e7',
     textColor: '#2b2620',
