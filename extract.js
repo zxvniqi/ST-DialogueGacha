@@ -56,10 +56,10 @@ function cleanLine(text) {
  * All quoted lines of one message in reading order. `start` is where the line sits in its
  * version's text, so the same line can be found again in the other version (translation / original).
  */
-function linesOfMessage(message, messageId, patterns, useTranslation) {
+function linesOfMessage(message, messageId, patterns, useTranslation, mask) {
     const translatable = Boolean(message.extra?.display_text);
     const translated = useTranslation && translatable;
-    const text = stripMarkup(getMessageText(message, useTranslation));
+    const text = stripMarkup(mask(getMessageText(message, useTranslation), messageId));
     const lines = [];
     for (const { open, close, regex } of patterns) {
         for (const match of text.matchAll(regex)) {
@@ -78,11 +78,14 @@ function linesOfMessage(message, messageId, patterns, useTranslation) {
     return lines.sort((a, b) => a.start - b.start);
 }
 
+// `mask(text, messageId)` blanks out parts hidden on screen (keeping offsets); none by default
+const NO_MASK = text => text;
+
 /**
  * @param {object[]} chat ST chat array
- * @param {{ styles: string[], includeHidden: boolean, includeUser: boolean, minLength: number, useTranslation: boolean }} options
+ * @param {{ styles: string[], includeHidden: boolean, includeUser: boolean, minLength: number, useTranslation: boolean, mask?: Function }} options
  */
-export function collectLines(chat, { styles, includeHidden, includeUser, minLength, useTranslation }) {
+export function collectLines(chat, { styles, includeHidden, includeUser, minLength, useTranslation, mask = NO_MASK }) {
     const patterns = buildPatterns(styles);
     const lines = [];
     if (patterns.length === 0) {
@@ -93,7 +96,7 @@ export function collectLines(chat, { styles, includeHidden, includeUser, minLeng
         if (!message?.mes || (message.is_system && !includeHidden) || (message.is_user && !includeUser)) {
             return;
         }
-        for (const line of linesOfMessage(message, messageId, patterns, useTranslation)) {
+        for (const line of linesOfMessage(message, messageId, patterns, useTranslation, mask)) {
             if (line.text.length >= minLength) {
                 lines.push(line);
             }
@@ -150,16 +153,17 @@ function alignQuotes(from, to) {
  * counts on both sides, since a translation often changes the quote marks (e.g. 「」 in a
  * Japanese original, "" in the Korean translation). An unpaired line falls back to its
  * proportional place.
+ * @param {Function} [mask] Same as collectLines' `mask`
  * @returns {object|null}
  */
-export function getCounterpart(chat, line) {
+export function getCounterpart(chat, line, mask = NO_MASK) {
     const message = chat[line.messageId];
     if (!message?.extra?.display_text) {
         return null;
     }
     const patterns = buildPatterns(Object.keys(QUOTE_STYLES));
-    const own = linesOfMessage(message, line.messageId, patterns, line.translated);
-    const others = linesOfMessage(message, line.messageId, patterns, !line.translated);
+    const own = linesOfMessage(message, line.messageId, patterns, line.translated, mask);
+    const others = linesOfMessage(message, line.messageId, patterns, !line.translated, mask);
     if (others.length === 0) {
         return null;
     }

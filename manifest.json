@@ -5,7 +5,7 @@
     "js": "index.js",
     "css": "style.css",
     "author": "zxvniqi",
-    "version": "1.6.0",
+    "version": "1.6.1",
     "homePage": "https://github.com/zxvniqi/ST-DialogueGacha",
     "auto_update": true,
     "cache_files": [
@@ -17,6 +17,7 @@
         "fonts.js",
         "appearance.js",
         "extract.js",
+        "hidden-text.js",
         "gacha-view.js",
         "card-image.js",
         "style.css"

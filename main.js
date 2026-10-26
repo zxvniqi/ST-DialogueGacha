@@ -2,6 +2,12 @@
 import { MODULE, getSettings } from './settings.js';
 import { collectLines, getCounterpart } from './extract.js';
 import { openGacha } from './gacha-view.js';
+import { maskHidden, messageInfo } from './hidden-text.js';
+
+/** Leaves out what the user's regex scripts hide on screen (removed blocks, status cards). */
+function maskForChat(chat) {
+    return (text, messageId) => maskHidden(text, messageInfo(chat, messageId));
+}
 
 function getQuoteStyles(settings) {
     return [settings.quoteDouble && 'double', settings.quoteCorner && 'corner'].filter(Boolean);
@@ -26,6 +32,7 @@ function getCandidates() {
         includeUser: settings.includeUser,
         minLength: settings.minLength,
         useTranslation: settings.useTranslation,
+        mask: maskForChat(chat),
     });
     if (lines.length === 0) {
         toastr.info('뽑을 수 있는 대사가 없어요.', '대사 가챠');
@@ -35,7 +42,8 @@ function getCandidates() {
 
 /** The drawn line in its other version (translation <-> original), or null. */
 function getOtherVersion(line) {
-    return getCounterpart(SillyTavern.getContext().chat, line);
+    const { chat } = SillyTavern.getContext();
+    return getCounterpart(chat, line, maskForChat(chat));
 }
 
 const openPopup = () => openGacha({ getCandidates, getOtherVersion });
