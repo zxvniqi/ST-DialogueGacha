@@ -81,6 +81,11 @@ function linesOfMessage(message, messageId, patterns, useTranslation, mask) {
 // `mask(text, messageId)` blanks out parts hidden on screen (keeping offsets); none by default
 const NO_MASK = text => text;
 
+/** Letters and digits only: "읏!" or "……?" are too short however much punctuation they have. */
+function letterCount(text) {
+    return text.match(/[\p{L}\p{N}]/gu)?.length ?? 0;
+}
+
 /**
  * @param {object[]} chat ST chat array
  * @param {{ styles: string[], includeHidden: boolean, includeUser: boolean, minLength: number, useTranslation: boolean, mask?: Function }} options
@@ -97,7 +102,7 @@ export function collectLines(chat, { styles, includeHidden, includeUser, minLeng
             return;
         }
         for (const line of linesOfMessage(message, messageId, patterns, useTranslation, mask)) {
-            if (line.text.length >= minLength) {
+            if (letterCount(line.text) >= minLength) {
                 lines.push(line);
             }
         }

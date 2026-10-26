@@ -29,6 +29,13 @@ function row(label, ...controls) {
     return element;
 }
 
+function hint(text) {
+    const element = document.createElement('small');
+    element.className = 'stdg_hint';
+    element.textContent = text;
+    return element;
+}
+
 /** Independent on/off chips, one per boolean setting. */
 function chips(items, onChange) {
     const settings = getSettings();
@@ -119,7 +126,7 @@ function buildLinesPage(onChange) {
     page.append(
         row('대사 기호', chips([['quoteDouble', '" " 큰따옴표'], ['quoteCorner', '「 」 낫표']], onChange)),
         row('함께 뽑기', chips([['includeHidden', '숨긴 메시지'], ['includeUser', '내 대사']], onChange)),
-        row('최소 글자', stepper('minLength', MIN_LENGTH_RANGE, '자', onChange)),
+        row('최소 글자', stepper('minLength', MIN_LENGTH_RANGE, '자', onChange), hint('!? … 같은 문장부호는 안 세요')),
         row('처음 보일 글', segmented('useTranslation', [[true, '번역문'], [false, '원문']], onChange)),
         row('뽑기 연출', segmented('effects', [[true, '켜기'], [false, '끄기']], onChange)),
     );
